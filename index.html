@@ -1,369 +1,1234 @@
-import 'package:flutter/material.dart';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All 5's — Dart Score App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#15110f;
+      --bg-2:#211916;
+      --panel:#1d1613;
+      --panel-2:rgba(255,255,255,.05);
+      --text:#f8f0e8;
+      --muted:#c6b5a6;
+      --accent:#ff7a1a;
+      --accent-2:#ffb347;
+      --danger:#ff5c5c;
+      --success:#7ce38b;
+      --line:rgba(255,255,255,.1);
+      --gold:#f6d28a;
+      --shadow:0 20px 50px rgba(0,0,0,.35);
+      --radius:24px;
+      --radius-sm:16px;
+      --max:1400px;
+    }
 
-void main() {
-  runApp(const AllFivesApp());
-}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,122,26,.18), transparent 35%),
+        radial-gradient(circle at 80% 20%, rgba(246,210,138,.08), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(255,255,255,.04), transparent 35%),
+        linear-gradient(180deg, #120e0c 0%, #17120f 45%, #120e0c 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
 
-class AllFivesApp extends StatelessWidget {
-  const AllFivesApp({super.key});
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size:28px 28px;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.45), rgba(0,0,0,.08));
+      z-index:0;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "All 5's Darts",
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      home: const GameSetupScreen(),
-    );
-  }
-}
+    .wrap{
+      position:relative;
+      z-index:1;
+      width:min(var(--max), calc(100% - 32px));
+      margin:0 auto;
+      padding:24px 0 56px;
+    }
 
-class Player {
-  final String name;
-  int totalScore = 0;
-  List<int> currentRoundDarts = [];
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:10px 0 20px;
+    }
 
-  Player(this.name);
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
 
-  // Deep copy for history snapshotting
-  Player copy() {
-    return Player(name)
-      ..totalScore = totalScore
-      ..currentRoundDarts = List.from(currentRoundDarts);
-  }
-}
+    .brand-mark{
+      width:54px;
+      height:54px;
+      border-radius:18px;
+      background:
+        radial-gradient(circle at 30% 30%, var(--gold), transparent 30%),
+        linear-gradient(135deg, #2a1d17, #120e0c);
+      border:1px solid rgba(255,255,255,.1);
+      display:grid;
+      place-items:center;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
 
-class GameStateSnapshot {
-  final List<Player> players;
-  final int currentPlayerIndex;
-  final String multiplier;
+    .brand-mark svg{
+      width:34px;height:34px;
+      filter:drop-shadow(0 3px 8px rgba(255,122,26,.25));
+    }
 
-  GameStateSnapshot({
-    required this.players,
-    required this.currentPlayerIndex,
-    required this.multiplier,
-  });
-}
+    .brand h1{
+      margin:0;
+      font-family:'Bebas Neue', cursive;
+      font-size:clamp(2rem, 5vw, 3.8rem);
+      line-height:.9;
+      letter-spacing:.04em;
+      color:var(--text);
+    }
 
-class GameSetupScreen extends StatefulWidget {
-  const GameSetupScreen({super.key});
+    .brand p{
+      margin:0;
+      color:var(--muted);
+      font-size:.95rem;
+      letter-spacing:.02em;
+    }
 
-  @override
-  State<GameSetupScreen> createState() => _GameSetupScreenState();
-}
+    .hero{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:22px;
+      align-items:stretch;
+      margin-bottom:22px;
+    }
 
-class _GameSetupScreenState extends State<GameSetupScreen> {
-  final List<TextEditingController> _controllers = [
-    TextEditingController(text: 'Player 1'),
-    TextEditingController(text: 'Player 2'),
-  ];
+    .panel{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      overflow:hidden;
+    }
 
-  void _addPlayer() {
-    setState(() {
-      _controllers.add(TextEditingController(text: 'Player ${_controllers.length + 1}'));
-    });
-  }
+    .setup{
+      padding:28px;
+      position:relative;
+      isolation:isolate;
+    }
 
-  void _removePlayer(int index) {
-    if (_controllers.length > 1) {
-      setState(() {
-        _controllers.removeAt(index);
+    .setup::after{
+      content:"";
+      position:absolute;
+      inset:auto -10% -35% auto;
+      width:320px;
+      height:320px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,122,26,.22), transparent 65%);
+      z-index:-1;
+      filter:blur(10px);
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.04);
+      color:var(--gold);
+      font-weight:700;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+
+    .eyebrow-dot{
+      width:9px;height:9px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 0 6px rgba(255,122,26,.12);
+    }
+
+    .setup h2{
+      margin:18px 0 10px;
+      font-family:'Bebas Neue', cursive;
+      font-size:clamp(2.8rem, 8vw, 5.6rem);
+      line-height:.92;
+      letter-spacing:.03em;
+      max-width:10ch;
+    }
+
+    .setup .lead{
+      color:var(--muted);
+      font-size:1.02rem;
+      line-height:1.7;
+      max-width:58ch;
+      margin-bottom:24px;
+    }
+
+    .rules-strip{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:24px;
+    }
+
+    .rule{
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      min-height:106px;
+    }
+
+    .rule strong{
+      display:block;
+      color:var(--gold);
+      margin-bottom:8px;
+      font-size:.9rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .rule span{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.5;
+    }
+
+    .side{
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:22px;
+    }
+
+    .players-panel{
+      padding:24px;
+    }
+
+    .players-panel h3,
+    .scoreboard h3,
+    .controls h3,
+    .history h3{
+      margin:0 0 14px;
+      font-family:'Bebas Neue', cursive;
+      letter-spacing:.05em;
+      font-size:2rem;
+      line-height:1;
+    }
+
+    .player-form{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    input{
+      width:100%;
+      border:none;
+      outline:none;
+      color:var(--text);
+      background:#120f0d;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;
+      padding:16px 18px;
+      font:inherit;
+      transition:.2s ease;
+    }
+
+    input:focus{
+      border-color:rgba(255,122,26,.65);
+      box-shadow:0 0 0 4px rgba(255,122,26,.12);
+      transform:translateY(-1px);
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:14px 18px;
+      font:inherit;
+      font-weight:800;
+      letter-spacing:.02em;
+      color:var(--text);
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.1);
+    }
+
+    .btn:hover{transform:translateY(-2px)}
+    .btn:active{transform:translateY(1px) scale(.985)}
+
+    .btn-primary{
+      background:linear-gradient(135deg, var(--accent), #ff9548);
+      color:#1d1007;
+      border-color:rgba(255,255,255,.12);
+      box-shadow:0 12px 24px rgba(255,122,26,.25);
+    }
+
+    .btn-primary:hover{
+      box-shadow:0 16px 32px rgba(255,122,26,.32);
+      filter:saturate(1.05);
+    }
+
+    .btn-secondary{
+      background:rgba(255,255,255,.04);
+    }
+
+    .btn-danger{
+      background:linear-gradient(135deg, #8f2323, #d83a3a);
+      border-color:rgba(255,255,255,.08);
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+      min-height:50px;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      font-weight:700;
+    }
+
+    .chip button{
+      width:24px;height:24px;
+      border-radius:50%;
+      border:none;
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:800;
+    }
+
+    .meta{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.5;
+    }
+
+    .main-grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:22px;
+    }
+
+    .left-stack, .right-stack{
+      display:grid;
+      gap:22px;
+      align-content:start;
+    }
+
+    .scoreboard{
+      padding:22px;
+    }
+
+    .score-head{
+      display:flex;
+      align-items:end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .status-badge{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.09);
+      color:var(--gold);
+      font-size:.82rem;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th, td{
+      text-align:left;
+      padding:14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:middle;
+    }
+
+    th{
+      color:var(--muted);
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+    }
+
+    tbody tr{
+      transition:background .18s ease, transform .18s ease;
+    }
+
+    tbody tr.active{
+      background:rgba(255,122,26,.08);
+    }
+
+    tbody tr:hover{
+      background:rgba(255,255,255,.03);
+    }
+
+    .player-name{
+      font-weight:800;
+      font-size:1rem;
+    }
+
+    .score-big{
+      font-family:'Bebas Neue', cursive;
+      font-size:2rem;
+      line-height:1;
+      letter-spacing:.03em;
+      color:var(--gold);
+    }
+
+    .round-note{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .winner{
+      color:var(--success);
+      font-weight:800;
+    }
+
+    .controls{
+      padding:22px;
+    }
+
+    .turnbar{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:14px;
+      align-items:start;
+      margin-bottom:18px;
+    }
+
+    .turnbox{
+      padding:18px;
+      border-radius:20px;
+      background:
+        linear-gradient(180deg, rgba(255,122,26,.12), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .turnbox .label{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-size:.76rem;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .turnbox .name{
+      font-family:'Bebas Neue', cursive;
+      font-size:2.5rem;
+      line-height:.95;
+      letter-spacing:.04em;
+    }
+
+    .dart-state{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .dart-pill{
+      min-width:72px;
+      text-align:center;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#120f0d;
+      border:1px solid rgba(255,255,255,.08);
+      font-weight:800;
+    }
+
+    .dart-pill small{
+      display:block;
+      color:var(--muted);
+      font-size:.72rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:4px;
+    }
+
+    .segment-grid{
+      display:grid;
+      grid-template-columns:repeat(7, 1fr);
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .multiplier-grid{
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .segment-btn, .multi-btn, .action-btn{
+      padding:14px 10px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      color:var(--text);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      cursor:pointer;
+      font:inherit;
+      font-weight:800;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .segment-btn:hover, .multi-btn:hover, .action-btn:hover{
+      transform:translateY(-2px);
+      border-color:rgba(255,122,26,.45);
+      box-shadow:0 8px 18px rgba(0,0,0,.18);
+    }
+
+    .segment-btn.selected, .multi-btn.selected{
+      background:linear-gradient(135deg, var(--accent), #ff9548);
+      color:#1d1007;
+      border-color:transparent;
+      box-shadow:0 12px 24px rgba(255,122,26,.28);
+    }
+
+    .multi-btn.miss{
+      background:linear-gradient(180deg, rgba(255,92,92,.16), rgba(255,255,255,.03));
+    }
+
+    .multi-btn.miss.selected{
+      background:linear-gradient(135deg, #ff6969, #ff8c8c);
+      color:#2a0d0d;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+    }
+
+    .action-btn.commit{
+      background:linear-gradient(135deg, var(--accent), #ff9548);
+      color:#1d1007;
+      border-color:transparent;
+    }
+
+    .action-btn.undo{
+      background:rgba(255,255,255,.05);
+    }
+
+    .action-btn.reset{
+      background:linear-gradient(135deg, #5f1717, #b22e2e);
+    }
+
+    .selection-readout{
+      margin:-2px 0 14px;
+      color:var(--muted);
+      font-size:.95rem;
+      min-height:1.4em;
+    }
+
+    .history{
+      padding:22px;
+    }
+
+    .history-list{
+      display:grid;
+      gap:12px;
+      max-height:460px;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .history-item{
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .history-item strong{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      font-size:1rem;
+      margin-bottom:8px;
+    }
+
+    .history-item span{
+      color:var(--muted);
+      line-height:1.5;
+      font-size:.92rem;
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:8px 2px;
+    }
+
+    .footer-note{
+      margin-top:20px;
+      color:var(--muted);
+      text-align:center;
+      font-size:.9rem;
+    }
+
+    .reveal{
+      opacity:0;
+      transform:translateY(18px);
+      animation:rise .7s ease forwards;
+    }
+
+    .delay-1{animation-delay:.08s}
+    .delay-2{animation-delay:.16s}
+    .delay-3{animation-delay:.24s}
+    .delay-4{animation-delay:.32s}
+
+    @keyframes rise{
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .observe{
+      opacity:0;
+      transform:translateY(18px);
+      transition:opacity .6s ease, transform .6s ease;
+    }
+
+    .observe.in{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .hidden{display:none !important}
+
+    @media (max-width: 1120px){
+      .hero, .main-grid{grid-template-columns:1fr}
+      .side{grid-template-rows:auto}
+    }
+
+    @media (max-width: 760px){
+      .wrap{width:min(100% - 20px, var(--max))}
+      .setup, .players-panel, .scoreboard, .controls, .history{padding:18px}
+      .rules-strip{grid-template-columns:1fr}
+      .segment-grid{grid-template-columns:repeat(4,1fr)}
+      .multiplier-grid{grid-template-columns:repeat(3,1fr)}
+      .actions{grid-template-columns:1fr}
+      .turnbar{grid-template-columns:1fr}
+      .player-form{grid-template-columns:1fr}
+      .topbar{align-items:flex-start; flex-direction:column}
+      th:nth-child(4), td:nth-child(4){display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar reveal">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="24" stroke="#f6d28a" stroke-width="3"/>
+            <circle cx="32" cy="32" r="14" stroke="#ff7a1a" stroke-width="3"/>
+            <circle cx="32" cy="32" r="4" fill="#ff7a1a"/>
+            <path d="M50 14L34 30" stroke="#fff2e6" stroke-width="4" stroke-linecap="round"/>
+            <path d="M48 12L54 10L52 16Z" fill="#fff2e6"/>
+          </svg>
+        </div>
+        <div>
+          <h1>All 5's</h1>
+          <p>Dart scoring app — race to 51</p>
+        </div>
+      </div>
+      <div class="status-badge" id="gameStatus">Setup Mode</div>
+    </header>
+
+    <section class="hero">
+      <section class="panel setup reveal delay-1">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> pub rules scorer</div>
+        <h2>Every round lives or dies by 5.</h2>
+        <p class="lead">
+          Add players, start the match, and score three darts per turn. A round only scores if the
+          total is divisible by 5. Each complete 5 equals 1 point. First player to <strong>51</strong> wins.
+          If the third dart is a miss, the round scores <strong>zero</strong>.
+        </p>
+        <div class="rules-strip">
+          <div class="rule">
+            <strong>Three darts</strong>
+            <span>Each player throws exactly 3 darts per round. The app tracks every dart in order.</span>
+          </div>
+          <div class="rule">
+            <strong>Divisible by 5</strong>
+            <span>Total round score must divide cleanly by 5. Example: 15 total = 3 points.</span>
+          </div>
+          <div class="rule">
+            <strong>Third dart miss</strong>
+            <span>If dart 3 is a miss, the round is worth 0 points, even if the running total looked valid.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel players-panel reveal delay-2">
+          <h3>Players</h3>
+          <div class="player-form">
+            <input id="playerNameInput" type="text" placeholder="Enter player name" maxlength="24" aria-label="Player name">
+            <button class="btn btn-primary" id="addPlayerBtn">Add Player</button>
+          </div>
+          <div class="chips" id="playerChips">
+            <div class="empty">No players added yet.</div>
+          </div>
+          <p class="meta" style="margin:14px 0 18px;">
+            Add at least 2 players to start. Turn order follows the player list shown here.
+          </p>
+          <button class="btn btn-primary" id="startGameBtn" style="width:100%;">Start Game</button>
+        </section>
+
+        <section class="panel players-panel reveal delay-3">
+          <h3>Round Logic</h3>
+          <p class="meta" style="margin:0;">
+            Segment values are selected first, then apply <strong>Single</strong>, <strong>Double</strong>,
+            <strong>Triple</strong>, or <strong>Bullseye</strong>. A miss counts as 0. Bullseye scores 25 and
+            ignores multiplier rules.
+          </p>
+        </section>
+      </aside>
+    </section>
+
+    <main class="main-grid">
+      <div class="left-stack">
+        <section class="panel scoreboard observe">
+          <div class="score-head">
+            <h3>Scoreboard</h3>
+            <div class="status-badge" id="turnBadge">Waiting to start</div>
+          </div>
+          <div style="overflow:auto;">
+            <table aria-label="Scoreboard table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Score</th>
+                  <th>Current Round</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody">
+                <tr>
+                  <td colspan="4" class="empty">Start a game to begin scoring.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel controls observe">
+          <h3>Throw Controls</h3>
+          <div class="turnbar">
+            <div class="turnbox">
+              <div class="label">Current player</div>
+              <div class="name" id="currentPlayerName">—</div>
+              <div class="dart-state" id="dartState">
+                <div class="dart-pill"><small>Dart 1</small>—</div>
+                <div class="dart-pill"><small>Dart 2</small>—</div>
+                <div class="dart-pill"><small>Dart 3</small>—</div>
+              </div>
+            </div>
+            <div class="turnbox" style="min-width:220px;">
+              <div class="label">Round preview</div>
+              <div style="font-size:2rem;font-weight:900;color:var(--gold);" id="roundPreviewTotal">0</div>
+              <div class="meta" id="roundPreviewText">Select a segment and a result.</div>
+            </div>
+          </div>
+
+          <div class="selection-readout" id="selectionReadout">Selected: none</div>
+
+          <div class="segment-grid" id="segmentGrid"></div>
+          <div class="multiplier-grid">
+            <button class="multi-btn" data-multi="S">Single</button>
+            <button class="multi-btn" data-multi="D">Double</button>
+            <button class="multi-btn" data-multi="T">Triple</button>
+            <button class="multi-btn" data-multi="B">Bullseye</button>
+            <button class="multi-btn miss" data-multi="M">Miss</button>
+          </div>
+
+          <div class="actions">
+            <button class="action-btn commit" id="commitThrowBtn">Record Dart</button>
+            <button class="action-btn undo" id="undoBtn">Undo</button>
+            <button class="action-btn reset" id="newGameBtn">New Game</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-stack">
+        <section class="panel history observe">
+          <h3>Round History</h3>
+          <div class="history-list" id="historyList">
+            <div class="empty">No rounds recorded yet.</div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <p class="footer-note reveal delay-4">
+      Built for quick pub-side scoring. Winner is the first player to reach exactly or at least 51 points.
+    </p>
+  </div>
+
+  <script>
+    const players = [];
+    let gameStarted = false;
+    let currentPlayerIndex = 0;
+    let winnerIndex = null;
+    let selectedSegment = null;
+    let selectedMulti = null;
+    let history = [];
+    let actionStack = [];
+
+    const playerNameInput = document.getElementById('playerNameInput');
+    const addPlayerBtn = document.getElementById('addPlayerBtn');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const playerChips = document.getElementById('playerChips');
+    const scoreboardBody = document.getElementById('scoreboardBody');
+    const currentPlayerName = document.getElementById('currentPlayerName');
+    const dartState = document.getElementById('dartState');
+    const roundPreviewTotal = document.getElementById('roundPreviewTotal');
+    const roundPreviewText = document.getElementById('roundPreviewText');
+    const selectionReadout = document.getElementById('selectionReadout');
+    const historyList = document.getElementById('historyList');
+    const turnBadge = document.getElementById('turnBadge');
+    const gameStatus = document.getElementById('gameStatus');
+    const commitThrowBtn = document.getElementById('commitThrowBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const segmentGrid = document.getElementById('segmentGrid');
+
+    function createSegments() {
+      segmentGrid.innerHTML = '';
+      for (let i = 1; i <= 20; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'segment-btn';
+        btn.textContent = i;
+        btn.dataset.segment = i;
+        btn.addEventListener('click', () => {
+          if (!gameStarted || winnerIndex !== null) return;
+          selectedSegment = i;
+          updateSelectionUI();
+        });
+        segmentGrid.appendChild(btn);
+      }
+    }
+
+    function addPlayer() {
+      const name = playerNameInput.value.trim();
+      if (!name) return;
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        alert('Player name already added.');
+        return;
+      }
+      players.push({
+        name,
+        score: 0,
+        darts: [],
+        rounds: []
+      });
+      playerNameInput.value = '';
+      renderPlayerChips();
+      renderScoreboard();
+    }
+
+    function removePlayer(index) {
+      if (gameStarted) return;
+      players.splice(index, 1);
+      renderPlayerChips();
+      renderScoreboard();
+    }
+
+    function renderPlayerChips() {
+      playerChips.innerHTML = '';
+      if (!players.length) {
+        playerChips.innerHTML = '<div class="empty">No players added yet.</div>';
+        return;
+      }
+      players.forEach((player, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.innerHTML = `
+          <span>${escapeHtml(player.name)}</span>
+          <button aria-label="Remove ${escapeHtml(player.name)}" ${gameStarted ? 'disabled' : ''}>×</button>
+        `;
+        chip.querySelector('button').addEventListener('click', () => removePlayer(index));
+        playerChips.appendChild(chip);
       });
     }
-  }
 
-  void _startGame() {
-    List<Player> players = _controllers
-        .where((c) => c.text.trim().isNotEmpty)
-        .map((c) => Player(c.text.trim()))
-        .toList();
-
-    if (players.isEmpty) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ScoreboardScreen(players: players),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("All 5's Setup"), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: _controllers.length,
-                itemBuilder: (context, index) => Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controllers[index],
-                        decoration: InputDecoration(labelText: 'Player ${index + 1} Name'),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
-                      onPressed: () => _removePlayer(index),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _addPlayer,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Player'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _startGame,
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Start Game'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ScoreboardScreen extends StatefulWidget {
-  final List<Player> players;
-
-  const ScoreboardScreen({super.key, required this.players});
-
-  @override
-  State<ScoreboardScreen> createState() => _ScoreboardScreenState();
-}
-
-class _ScoreboardScreenState extends State<ScoreboardScreen> {
-  int currentPlayerIndex = 0;
-  String multiplier = 'Single';
-  final List<GameStateSnapshot> _history = [];
-  bool gameFinished = false;
-
-  void _saveToHistory() {
-    _history.add(
-      GameStateSnapshot(
-        players: widget.players.map((p) => p.copy()).toList(),
-        currentPlayerIndex: currentPlayerIndex,
-        multiplier: multiplier,
-      ),
-    );
-  }
-
-  void _handleScore(int value, {bool isMiss = false}) {
-    if (gameFinished) return;
-
-    _saveToHistory();
-
-    setState(() {
-      Player p = widget.players[currentPlayerIndex];
-      int score = 0;
-
-      if (!isMiss) {
-        if (value == 25) {
-          score = multiplier == 'Double' ? 50 : 25;
-        } else {
-          int mult = multiplier == 'Triple' ? 3 : (multiplier == 'Double' ? 2 : 1);
-          score = value * mult;
-        }
+    function renderScoreboard() {
+      scoreboardBody.innerHTML = '';
+      if (!players.length) {
+        scoreboardBody.innerHTML = '<tr><td colspan="4" class="empty">Add players to build the scoreboard.</td></tr>';
+        return;
       }
 
-      p.currentRoundDarts.add(score);
-      multiplier = 'Single'; // Reset multiplier selection for the next dart
+      players.forEach((player, index) => {
+        const tr = document.createElement('tr');
+        if (gameStarted && index === currentPlayerIndex && winnerIndex === null) tr.classList.add('active');
 
-      // If the player completed their 3-dart round
-      if (p.currentRoundDarts.length == 3) {
-        // Rule B Check: If the 3rd dart is a complete miss, the round earns 0 points
-        if (isMiss) {
-          // Pointless round due to last dart miss
-        } else {
-          int roundTotal = p.currentRoundDarts.reduce((a, b) => a + b);
-          
-          // Rule A Check: Total must be cleanly divisible by 5
-          if (roundTotal > 0 && roundTotal % 5 == 0) {
-            p.totalScore += (roundTotal ~/ 5);
-          }
+        const currentRoundText = player.darts.length
+          ? player.darts.map(d => d.label).join(' • ')
+          : '—';
+
+        let status = 'Ready';
+        if (winnerIndex === index) status = 'Winner';
+        else if (gameStarted && index === currentPlayerIndex) status = 'Throwing';
+        else if (!gameStarted) status = 'Waiting';
+
+        tr.innerHTML = `
+          <td><div class="player-name">${escapeHtml(player.name)}</div></td>
+          <td><div class="score-big">${player.score}</div></td>
+          <td><div class="round-note">${escapeHtml(currentRoundText)}</div></td>
+          <td class="${winnerIndex === index ? 'winner' : 'round-note'}">${status}</td>
+        `;
+        scoreboardBody.appendChild(tr);
+      });
+    }
+
+    function startGame() {
+      if (players.length < 2) {
+        alert('Add at least 2 players to start.');
+        return;
+      }
+      gameStarted = true;
+      winnerIndex = null;
+      currentPlayerIndex = 0;
+      history = [];
+      actionStack = [];
+      players.forEach(p => {
+        p.score = 0;
+        p.darts = [];
+        p.rounds = [];
+      });
+      selectedSegment = null;
+      selectedMulti = null;
+      gameStatus.textContent = 'Game Live';
+      turnBadge.textContent = 'Round in progress';
+      renderAll();
+    }
+
+    function newGame() {
+      if (!players.length) return;
+      if (!confirm('Start a new game and reset all scores?')) return;
+      startGame();
+    }
+
+    function getCurrentPlayer() {
+      return players[currentPlayerIndex] || null;
+    }
+
+    function updateSelectionUI() {
+      document.querySelectorAll('.segment-btn').forEach(btn => {
+        btn.classList.toggle('selected', Number(btn.dataset.segment) === selectedSegment);
+      });
+      document.querySelectorAll('.multi-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.multi === selectedMulti);
+      });
+
+      let text = 'Selected: none';
+      if (selectedMulti === 'B') text = 'Selected: Bullseye (25)';
+      else if (selectedMulti === 'M') text = 'Selected: Miss (0)';
+      else if (selectedSegment && selectedMulti) {
+        const labels = { S: 'Single', D: 'Double', T: 'Triple' };
+        text = `Selected: ${labels[selectedMulti]} ${selectedSegment}`;
+      } else if (selectedSegment) {
+        text = `Selected segment: ${selectedSegment}`;
+      } else if (selectedMulti) {
+        const labels = { S: 'Single', D: 'Double', T: 'Triple', B: 'Bullseye', M: 'Miss' };
+        text = `Selected result: ${labels[selectedMulti]}`;
+      }
+      selectionReadout.textContent = text;
+    }
+
+    function computeThrow() {
+      if (selectedMulti === 'M') return { score: 0, label: 'Miss', valid: true };
+      if (selectedMulti === 'B') return { score: 25, label: 'Bull', valid: true };
+      if (!selectedSegment || !selectedMulti) return { valid: false };
+
+      const multipliers = { S: 1, D: 2, T: 3 };
+      const labels = { S: 'S', D: 'D', T: 'T' };
+      return {
+        score: selectedSegment * multipliers[selectedMulti],
+        label: `${labels[selectedMulti]}${selectedSegment}`,
+        valid: true
+      };
+    }
+
+    function recordThrow() {
+      if (!gameStarted) {
+        alert('Start the game first.');
+        return;
+      }
+      if (winnerIndex !== null) return;
+
+      const player = getCurrentPlayer();
+      const result = computeThrow();
+
+      if (!result.valid) {
+        alert('Select a segment and result, or choose Bullseye or Miss.');
+        return;
+      }
+
+      player.darts.push({
+        score: result.score,
+        label: result.label
+      });
+
+      actionStack.push({
+        type: 'dart',
+        playerIndex: currentPlayerIndex,
+        dart: { score: result.score, label: result.label }
+      });
+
+      selectedSegment = null;
+      selectedMulti = null;
+      updateSelectionUI();
+
+      if (player.darts.length === 3) {
+        finalizeRound(player);
+      }
+
+      renderAll();
+    }
+
+    function finalizeRound(player) {
+      const darts = [...player.darts];
+      const total = darts.reduce((sum, d) => sum + d.score, 0);
+      const thirdMiss = darts[2] && darts[2].score === 0 && darts[2].label === 'Miss';
+
+      let points = 0;
+      let reason = '';
+
+      if (thirdMiss) {
+        reason = 'Third dart was a miss, so round scores 0.';
+      } else if (total % 5 !== 0) {
+        reason = 'Round total not divisible by 5.';
+      } else {
+        points = total / 5;
+        reason = `Scored ${points} point${points === 1 ? '' : 's'} from ${total}.`;
+      }
+
+      player.score += points;
+      player.rounds.push({
+        darts,
+        total,
+        points,
+        reason
+      });
+
+      history.unshift({
+        player: player.name,
+        darts: darts.map(d => d.label),
+        total,
+        points,
+        reason
+      });
+
+      actionStack.push({
+        type: 'roundComplete',
+        playerIndex: currentPlayerIndex,
+        points,
+        round: player.rounds[player.rounds.length - 1]
+      });
+
+      player.darts = [];
+
+      if (player.score >= 51 && winnerIndex === null) {
+        winnerIndex = currentPlayerIndex;
+        gameStatus.textContent = 'Winner Found';
+        turnBadge.textContent = `${player.name} wins`;
+        alert(`${player.name} wins All 5's with ${player.score} points!`);
+        return;
+      }
+
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+    }
+
+    function undoLast() {
+      if (!actionStack.length) return;
+
+      const last = actionStack.pop();
+
+      if (last.type === 'roundComplete') {
+        const player = players[last.playerIndex];
+        if (winnerIndex !== null) {
+          winnerIndex = null;
+          gameStatus.textContent = 'Game Live';
         }
 
-        if (p.totalScore >= 51) {
-          gameFinished = true;
-          _showWinner(p.name);
-        } else {
-          p.currentRoundDarts.clear();
-          currentPlayerIndex = (currentPlayerIndex + 1) % widget.players.length;
+        currentPlayerIndex = last.playerIndex;
+        player.score -= last.points;
+        player.rounds.pop();
+        if (history.length) history.shift();
+        player.darts = last.round.darts.map(d => ({...d}));
+
+        const priorDartAction = actionStack.pop();
+        if (priorDartAction && priorDartAction.type === 'dart' && priorDartAction.playerIndex === last.playerIndex) {
+          player.darts.pop();
+        } else if (priorDartAction) {
+          actionStack.push(priorDartAction);
         }
+      } else if (last.type === 'dart') {
+        const player = players[last.playerIndex];
+        currentPlayerIndex = last.playerIndex;
+        player.darts.pop();
+      }
+
+      renderAll();
+    }
+
+    function renderCurrentTurn() {
+      const player = getCurrentPlayer();
+      currentPlayerName.textContent = player ? player.name : '—';
+
+      dartState.innerHTML = '';
+      const darts = player ? player.darts : [];
+      for (let i = 0; i < 3; i++) {
+        const pill = document.createElement('div');
+        pill.className = 'dart-pill';
+        pill.innerHTML = `<small>Dart ${i + 1}</small>${darts[i] ? escapeHtml(darts[i].label) : '—'}`;
+        dartState.appendChild(pill);
+      }
+
+      const total = darts.reduce((sum, d) => sum + d.score, 0);
+      roundPreviewTotal.textContent = total;
+
+      if (!gameStarted) {
+        roundPreviewText.textContent = 'Select players and start the match.';
+        turnBadge.textContent = 'Waiting to start';
+      } else if (winnerIndex !== null) {
+        roundPreviewText.textContent = `${players[winnerIndex].name} has won the game.`;
+        turnBadge.textContent = `${players[winnerIndex].name} wins`;
+      } else {
+        const dartNumber = darts.length + 1;
+        roundPreviewText.textContent = dartNumber <= 3
+          ? `Recording dart ${dartNumber} of 3.`
+          : 'Round complete.';
+        turnBadge.textContent = `${player.name}'s turn`;
+      }
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+      if (!history.length) {
+        historyList.innerHTML = '<div class="empty">No rounds recorded yet.</div>';
+        return;
+      }
+
+      history.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        row.innerHTML = `
+          <strong>
+            <span>${escapeHtml(item.player)}</span>
+            <span>${item.points} pt${item.points === 1 ? '' : 's'}</span>
+          </strong>
+          <span>${escapeHtml(item.darts.join(' • '))} — total ${item.total}. ${escapeHtml(item.reason)}</span>
+        `;
+        historyList.appendChild(row);
+      });
+    }
+
+    function renderAll() {
+      renderPlayerChips();
+      renderScoreboard();
+      renderCurrentTurn();
+      renderHistory();
+      updateSelectionUI();
+      startGameBtn.textContent = gameStarted ? 'Restart Match' : 'Start Game';
+      commitThrowBtn.disabled = !gameStarted || winnerIndex !== null;
+      undoBtn.disabled = !actionStack.length;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    addPlayerBtn.addEventListener('click', addPlayer);
+    playerNameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addPlayer();
+    });
+
+    startGameBtn.addEventListener('click', () => {
+      if (gameStarted) {
+        if (confirm('Restart the current match? All scores will be reset.')) startGame();
+      } else {
+        startGame();
       }
     });
-  }
 
-  void _showWinner(String name) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('🎉 Winner! 🎉', textAlign: centerTitle ? TextAlign.center : null),
-        content: Text('$name scored 51+ points and won the game!', style: const TextStyle(fontSize: 18)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            child: const Text('Back to Setup'),
-          )
-        ],
-      ),
-    );
-  }
-
-  void _undo() {
-    if (_history.isEmpty) return;
-
-    setState(() {
-      final previousState = _history.removeLast();
-      currentPlayerIndex = previousState.currentPlayerIndex;
-      multiplier = previousState.multiplier;
-      gameFinished = false;
-
-      for (int i = 0; i < widget.players.length; i++) {
-        widget.players[i].totalScore = previousState.players[i].totalScore;
-        widget.players[i].currentRoundDarts = List.from(previousState.players[i].currentRoundDarts);
-      }
+    document.querySelectorAll('.multi-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!gameStarted || winnerIndex !== null) return;
+        selectedMulti = btn.dataset.multi;
+        if (selectedMulti === 'B' || selectedMulti === 'M') selectedSegment = null;
+        updateSelectionUI();
+      });
     });
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    Player current = widget.players[currentPlayerIndex];
+    commitThrowBtn.addEventListener('click', recordThrow);
+    undoBtn.addEventListener('click', undoLast);
+    newGameBtn.addEventListener('click', newGame);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("All 5's Scoreboard")),
-      body: Column(
-        children: [
-          // Player List View Row
-          Container(
-            height: 90,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: widget.players.map((p) => Card(
-                color: widget.players[currentPlayerIndex] == p ? Colors.deepPurple.shade900 : null,
-                shape: widget.players[currentPlayerIndex] == p 
-                    ? RoundedRectangleBorder(side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2), borderRadius: BorderRadius.circular(12))
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Score: ${p.totalScore}/51', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
-                    ],
-                  ),
-                ),
-              )).toList(),
-            ),
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Text("Current Turn: ${current.name}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(
-                  "Darts This Round: [ ${current.currentRoundDarts.join(', ')} ]  (${current.currentRoundDarts.length}/3)", 
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
+    createSegments();
+    renderAll();
 
-          // Multiplier Selectors
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: ['Single', 'Double', 'Triple'].map((m) => ChoiceChip(
-              label: Text(m),
-              selected: multiplier == m,
-              onSelected: (selected) {
-                if (selected) setState(() => multiplier = m);
-              },
-            )).toList(),
-          ),
-          const SizedBox(height: 8),
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('in');
+      });
+    }, { threshold: 0.12 });
 
-          // Core Targets Layout Matrix
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 5,
-              padding: const EdgeInsets.all(8),
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              children: [
-                ...List.generate(20, (i) => i + 1).map((i) => ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: EdgeInsets.zero),
-                  onPressed: () => _handleScore(i),
-                  child: Text('$i', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                )),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade900),
-                  onPressed: () => _handleScore(25),
-                  child: const Text('BULL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey.shade800),
-                  onPressed: () => _handleScore(0, isMiss: true),
-                  child: const Text('MISS', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ),
-
-          // Control Interfaces Footers
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _undo,
-                  icon: const Icon(Icons.undo),
-                  label: const Text('Undo'),
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.shade700),
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  label: const Text('New Game', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
+    document.querySelectorAll('.observe').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
