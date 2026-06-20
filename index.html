@@ -1,0 +1,245 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const AllFivesApp());
+}
+
+class AllFivesApp extends StatelessWidget {
+  const AllFivesApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: "All 5's Darts",
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        useMaterial3: true,
+      ),
+      home: const GameSetupScreen(),
+    );
+  }
+}
+
+class Player {
+  final String name;
+  int totalScore = 0;
+  List<int> currentRoundDarts = [];
+
+  Player(this.name);
+}
+
+class GameSetupScreen extends StatefulWidget {
+  const GameSetupScreen({super.key});
+
+  @override
+  State<GameSetupScreen> createState() => _GameSetupScreenState();
+}
+
+class _GameSetupScreenState extends State<GameSetupScreen> {
+  final List<TextEditingController> _controllers = [TextEditingController()];
+
+  void _addPlayer() {
+    setState(() {
+      _controllers.add(TextEditingController());
+    });
+  }
+
+  void _startGame() {
+    List<Player> players = _controllers
+        .where((c) => c.text.trim().isNotEmpty)
+        .map((c) => Player(c.text.trim()))
+        .toList();
+
+    if (players.isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScoreboardScreen(players: players),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("All 5's Setup")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: _controllers.length,
+                itemBuilder: (context, index) => TextField(
+                  controller: _controllers[index],
+                  decoration: InputDecoration(labelText: 'Player ${index + 1} Name'),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(onPressed: _addPlayer, child: const Text('Add Player')),
+                ElevatedButton(onPressed: _startGame, child: const Text('Start Game')),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ScoreboardScreen extends StatefulWidget {
+  final List<Player> players;
+  const ScoreboardScreen({super.key, required this.players});
+
+  @override
+  State<ScoreboardScreen> createState() => _ScoreboardScreenState();
+}
+
+class _ScoreboardScreenState extends State<ScoreboardScreen> {
+  int currentPlayerIndex = 0;
+  String multiplier = 'Single';
+  final List<int> _history = []; // Simple undo history
+
+  void _handleScore(int value) {
+    setState(() {
+      Player p = widget.players[currentPlayerIndex];
+      
+      int score = 0;
+      if (value == 0) { // Miss
+        score = 0;
+      } else if (value == 25) { // Bull
+        score = multiplier == 'Double' ? 50 : 25;
+      } else {
+        int mult = multiplier == 'Triple' ? 3 : (multiplier == 'Double' ? 2 : 1);
+        score = value * mult;
+      }
+
+      p.currentRoundDarts.add(score);
+      multiplier = 'Single';
+
+      if (p.currentRoundDarts.length == 3) {
+        int roundTotal = p.currentRoundDarts.reduce((a, b) => a + b);
+        if (roundTotal > 0 && roundTotal % 5 == 0) {
+          p.totalScore += (roundTotal ~/ 5);
+        }
+        
+        if (p.totalScore >= 51) {
+          _showWinner(p.name);
+        } else {
+          p.currentRoundDarts.clear();
+          currentPlayerIndex = (currentPlayerIndex + 1) % widget.players.length;
+        }
+      }
+    });
+  }
+
+  void _showWinner(String name) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Winner!'),
+        content: Text('$name won the game!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            child: const Text('New Game'),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _undo() {
+    setState(() {
+      Player p = widget.players[currentPlayerIndex];
+      if (p.currentRoundDarts.isNotEmpty) {
+        p.currentRoundDarts.removeLast();
+      } else {
+        // Go back to previous player
+        currentPlayerIndex = (currentPlayerIndex - 1 + widget.players.length) % widget.players.length;
+        widget.players[currentPlayerIndex].currentRoundDarts.add(0); // Dummy add to remove
+        widget.players[currentPlayerIndex].currentRoundDarts.removeLast();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Player current = widget.players[currentPlayerIndex];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("All 5's Scoreboard")),
+      body: Column(
+        children: [
+          // Player List
+          Container(
+            height: 100,
+            padding: const EdgeInsets.all(8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: widget.players.map((p) => Card(
+                color: widget.players[currentPlayerIndex] == p ? Colors.green.shade100 : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Score: ${p.totalScore}/51'),
+                    ],
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+          Text("Current: ${current.name}'s turn", style: const TextStyle(fontSize: 18)),
+          Text("Darts: ${current.currentRoundDarts.join(', ')}", style: const TextStyle(fontSize: 16)),
+          const Divider(),
+          // Multipliers
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: ['Single', 'Double', 'Triple'].map((m) => ChoiceChip(
+              label: Text(m),
+              selected: multiplier == m,
+              onSelected: (s) => setState(() => multiplier = m),
+            )).toList(),
+          ),
+          // Grid
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 5,
+              padding: const EdgeInsets.all(10),
+              children: [
+                ...List.generate(20, (i) => i + 1).map((i) => ElevatedButton(
+                  onPressed: () => _handleScore(i),
+                  child: Text('$i'),
+                )),
+                ElevatedButton(onPressed: () => _handleScore(25), child: const Text('Bull')),
+                ElevatedButton(onPressed: () => _handleScore(0), child: const Text('Miss')),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(onPressed: _undo, child: const Text('Undo')),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                  child: const Text('New Game'),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
